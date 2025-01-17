@@ -9,6 +9,8 @@ DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
 DEFAULT_TEMPERATURE = .5
 DEFAULT_MAX_TOKENS = 256
 DEFAULT_TOKEN_BUDGET = 1000
+DEFAULT_PERSONA = "sassy_assistant"
+DEFAULT_SYSTEM_MESSAGE = "A sassy assistant who is fed up with answering questions."
 DEFAULT_SYSTEM_MESSAGES = {"sassy_assistant":"A sassy assistant who is fed up with answering questions.",
                            "angry_assistant":"An angry assistant that likes yelling in all caps.",
                            "thoughtful_assistant":"A thoughtful assistant, always ready to dig deeper. This assistant asks clarifying questions to ensure understanding and approaches problems with a step-by-step methodology."}
@@ -22,9 +24,9 @@ class ConversationManager():
         self.api_key = api_key if api_key else DEFAULT_API_KEY
         self.base_url = base_url if base_url else DEFAULT_BASE_URL
         self.model = model if model else DEFAULT_MODEL
-        ############### include self.system_message associated with default persona ################
         self.system_messages = DEFAULT_SYSTEM_MESSAGES
-        if system_message:
+        self.system_message = system_message if system_message else DEFAULT_SYSTEM_MESSAGE
+        if system_message not in self.system_messages.values():
             self.system_messages["custom"] = system_message
 
         self.token_budget = token_budget if token_budget else DEFAULT_TOKEN_BUDGET
@@ -55,8 +57,14 @@ class ConversationManager():
             raise ValueError("Unknown persona.")
         
     def set_custom_system_message(self, message):
-        if message:
-            self.
+        if message and message not in self.system_messages.values():
+            self.system_messages['custom'] = message
+
+    def update_system_message_in_history(self):
+        if self.history and self.history[0]["role"] == "system":
+            self.history[0]["content"] = self.system_message
+        else:
+            self.history.insert(0, {"role": "system", "content":self.system_message})
 
     def chat_completion(self, prompt, temperature=0, max_tokens=0):
         self.temperature = temperature if temperature else DEFAULT_TEMPERATURE
@@ -85,8 +93,13 @@ class ConversationManager():
 
 def main():
     conv_manager = ConversationManager()
-    conv_manager.chat_completion("How's cracking?", temperature=1, max_tokens=10)
-    conv_manager.chat_completion("Do you reckon if it's a good weekend to hangout at the beach?", temperature=1, max_tokens=10)
+    conv_manager.chat_completion("How's cracking?", temperature=1, max_tokens=100)
+    conv_manager.chat_completion("Do you reckon if it's a good weekend to hangout at the beach?", temperature=1, max_tokens=100)
+
+    conv_manager.set_persona("thoughtful_assistant")
+    conv_manager.chat_completion("What should I bring along?", temperature=1, max_tokens=100)
+
+    ######### custom persona and message
 
     print(conv_manager.history)
 
