@@ -22,7 +22,7 @@ class ConversationManager():
         self.api_key = api_key if api_key else DEFAULT_API_KEY
         self.base_url = base_url if base_url else DEFAULT_BASE_URL
         self.model = model if model else DEFAULT_MODEL
-
+        ############### include self.system_message associated with default persona ################
         self.system_messages = DEFAULT_SYSTEM_MESSAGES
         if system_message:
             self.system_messages["custom"] = system_message
@@ -45,7 +45,18 @@ class ConversationManager():
         while self.total_tokens_used() > self.token_budget:
             if len(self.history) <= 1:
                 break
-            self.history.pop(1)    
+            self.history.pop(1)
+
+    def set_persona(self, persona):
+        if persona in self.system_messages:
+            self.system_message = self.system_messages[persona]
+            self.update_system_message_in_history()
+        else:
+            raise ValueError("Unknown persona.")
+        
+    def set_custom_system_message(self, message):
+        if message:
+            self.
 
     def chat_completion(self, prompt, temperature=0, max_tokens=0):
         self.temperature = temperature if temperature else DEFAULT_TEMPERATURE
